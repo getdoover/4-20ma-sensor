@@ -1,6 +1,8 @@
 {
     "simulator_app_key": "sim_app_key",
-    "digital_input_count": 1,
-    "digital_output_count": 2,
-    "a_funny_message": "yeeha"
+    "ai_pin_number": 2,
+    "input_name": "Tank Vol",
+    "min_range": 0.0,
+    "max_range": 100.0,
+    "measurement_units": "L"
 }

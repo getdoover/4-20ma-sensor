@@ -10,7 +10,7 @@ class Sensor420maUI:
             )
         
     def fetch(self):
-        return self.filtered_value
+        return [self.filtered_value]
 
     def update(self, filtered_value):
         self.filtered_value.update(filtered_value)
