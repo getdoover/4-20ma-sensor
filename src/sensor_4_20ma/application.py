@@ -42,7 +42,7 @@ class Sensor420maApplication(Application):
             filtered_reading
         )
         
-        self.set_tags({
+        await self.set_tags_async({
             "value":filtered_reading,
             "raw_value":raw_reading
         })
