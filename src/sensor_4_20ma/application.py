@@ -26,7 +26,7 @@ class Sensor420maApplication(Application):
         self.sensor = Sensor420ma(
             self.config.ai_pin.value,
             self.platform_iface,
-            [self.config.signal_low_range.value, self.config.signal_high_range.value],
+            [self.config.min_range.value, self.config.max_range.value],
             self.config.process_variance.value,
         )
         

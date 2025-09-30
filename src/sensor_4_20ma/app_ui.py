@@ -6,7 +6,7 @@ class Sensor420maUI:
         self.config = config
         self.filtered_value = ui.NumericVariable(
             "ai_value",
-            f"{self.config.input_name.value} ({self.config.measurement_units.value})"
+            f"{self.config.input_name.value}{self.config.disp_string_units})"
             )
         
     def fetch(self):

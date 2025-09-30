@@ -10,8 +10,8 @@ dependencies = [
 ]
 
 [project.scripts]
-doover-app-run = "4_20ma_sensor:main"
-export-config = "4_20ma_sensor.app_config:export"
+doover-app-run = "sensor_4_20ma:main"
+export-config = "sensor_4_20ma.app_config:export"
 
 [build-system]
 requires = ["hatchling"]
@@ -26,3 +26,6 @@ dev = [
     "pytest-asyncio>=0.26.0",
     "requests>=2.32.3",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sensor_4_20ma"]

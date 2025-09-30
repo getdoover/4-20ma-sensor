@@ -18,33 +18,72 @@
             "title": "Application Config",
             "type": "object",
             "properties": {
-                "digital_outputs_enabled": {
-                    "title": "Digital Outputs Enabled",
-                    "x-name": "digital_outputs_enabled",
+                "ai_pin_number": {
+                    "title": "AI Pin Number",
+                    "x-name": "ai_pin_number",
                     "x-hidden": false,
-                    "type": "boolean",
-                    "default": true
+                    "type": "integer",
+                    "description": "The analog input pin number for the 4-20mA sensor",
+                    "default": 0,
+                    "minimum": 0,
+                    "maximum": 15
                 },
-                "a_funny_message": {
-                    "title": "A Funny Message",
-                    "x-name": "a_funny_message",
-                    "x-hidden": false,
-                    "type": "string"
-                },
-                "simulator_app_key": {
-                    "format": "doover-application",
-                    "title": "Simulator App Key",
-                    "x-name": "simulator_app_key",
+                "input_name": {
+                    "title": "Input Name",
+                    "x-name": "input_name",
                     "x-hidden": false,
                     "type": "string",
-                    "description": "The app key for the simulator"
+                    "description": "Name for the Input that appears in the UI e.g. Tank Vol (L)"
+                },
+                "min_range": {
+                    "title": "Min Range",
+                    "x-name": "min_range",
+                    "x-hidden": false,
+                    "type": "number",
+                    "description": "The physical value corresponding to 4mA signal (minimum sensor reading)",
+                    "default": 0.0
+                },
+                "max_range": {
+                    "title": "Max Range",
+                    "x-name": "max_range",
+                    "x-hidden": false,
+                    "type": "number",
+                    "description": "The physical value corresponding to 20mA signal (maximum sensor reading)",
+                    "default": 100.0
+                },
+                "measurement_units": {
+                    "title": "Measurement Units",
+                    "x-name": "measurement_units",
+                    "x-hidden": false,
+                    "type": "string",
+                    "description": "The units for the sensor measurement (e.g., %, \u00b0C, PSI, etc.)",
+                    "default": null
+                },
+                "enable_signal_filtering": {
+                    "title": "Enable Signal Filtering",
+                    "x-name": "enable_signal_filtering",
+                    "x-hidden": false,
+                    "type": "boolean",
+                    "description": "Enable digital filtering to smooth out sensor readings",
+                    "default": true
+                },
+                "process_variance": {
+                    "title": "Process Variance",
+                    "x-name": "process_variance",
+                    "x-hidden": false,
+                    "type": "number",
+                    "description": "The process variance for the Kalman Filter running on the in put",
+                    "default": 0.5
                 }
             },
             "additionalElements": true,
             "required": [
-                "a_funny_message",
-                "simulator_app_key"
+                "input_name"
             ]
-        }
+        },
+        "key": "b00594bf-2aff-4bba-865d-024f20f46f4b",
+        "code_repo_key": null,
+        "repo_branch": "main",
+        "staging_config": {}
     }
 }

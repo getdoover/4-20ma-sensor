@@ -2,7 +2,6 @@ from pathlib import Path
 
 from pydoover import config
 
-
 class Sensor420maConfig(config.Schema):
     def __init__(self):
         # AI Pin Configuration
@@ -15,18 +14,19 @@ class Sensor420maConfig(config.Schema):
         )
         
         self.input_name = config.String(
-            "Name for the Input that appears in the UI",
+            "Input Name",
+            description="Name for the Input that appears in the UI e.g. Tank Vol (L)",
         )
         
         # 4-20mA Signal Range Configuration
-        self.signal_low_range = config.Number(
-            "Signal Low Range (4mA)",
+        self.min_range = config.Number(
+            "Min Range",
             default=0.0,
             description="The physical value corresponding to 4mA signal (minimum sensor reading)"
         )
         
-        self.signal_high_range = config.Number(
-            "Signal High Range (20mA)", 
+        self.max_range = config.Number(
+            "Max Range", 
             default=100.0,
             description="The physical value corresponding to 20mA signal (maximum sensor reading)"
         )
@@ -34,7 +34,7 @@ class Sensor420maConfig(config.Schema):
         # Units Configuration
         self.measurement_units = config.String(
             "Measurement Units",
-            default="%",
+            default=None,
             description="The units for the sensor measurement (e.g., %, °C, PSI, etc.)"
         )
         
@@ -60,6 +60,13 @@ class Sensor420maConfig(config.Schema):
             config.Boolean("Alarm Active", default=False, description="Enable the alarm"),
             config.Boolean("Alarm Reset", default=False, description="Reset the alarm"),
         )
+        
+    @property
+    def disp_string_units(self):
+        if self.measurement_units.value is None:
+            return ""
+        else:
+            return f" ({self.measurement_units.value})"
 
 def export():
     Sensor420maConfig().export(Path(__file__).parents[2] / "doover_config.json", "4_20ma_sensor")
