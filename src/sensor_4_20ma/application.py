@@ -30,7 +30,7 @@ class Sensor420maApplication(Application):
             self.config.process_variance.value,
         )
         
-        self.ui = Sensor420maUI()
+        self.ui = Sensor420maUI(self.config)
         self.ui_manager.add_children(*self.ui.fetch())
 
     async def main_loop(self):
