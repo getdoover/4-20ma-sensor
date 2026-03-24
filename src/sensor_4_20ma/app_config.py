@@ -50,6 +50,14 @@ class Sensor420maConfig(config.Schema):
             default=0.5,
             description="The process variance for the Kalman Filter running on the in put"
         )
+
+        self.sample_rate = config.Number(
+            "Sample Rate (Hz)",
+            default=2.0,
+            description="The sample rate in Hz for the main loop",
+            minimum=0.1,
+            maximum=5.0
+        )
         
         ## Alarms
         alarm = config.Object("Alarm", description="Alarm configuration")

@@ -21,7 +21,8 @@ class Sensor420maApplication(Application):
         self.ui: Sensor420maUI = None
 
     async def setup(self):
-        self.loop_target_period = 0.5
+        sample_rate = min(self.config.sample_rate.value, 5.0)
+        self.loop_target_period = 1.0 / sample_rate
         
         self.sensor = Sensor420ma(
             self.config.ai_pin.value,
