@@ -3,10 +3,11 @@ import asyncio, time, logging
 from pydoover.utils import apply_async_kalman_filter
 
 class Sensor420ma:
-    def __init__(self, pin_no, plt_iface, calibration, process_variance=0.5):
+    def __init__(self, pin_no, plt_iface, calibration, process_variance=0.5, filter_enabled=True):
         self.max_values = 10
         self.pin_no = pin_no
         self.process_variance = process_variance
+        self.filter_enabled = filter_enabled
         # self.data_store = {}
         self.plt_iface = plt_iface
         self.data_store = []
@@ -52,13 +53,12 @@ class Sensor420ma:
         else:
             return None
         
-    @apply_async_kalman_filter()
-    async def get_reading(self, kf_process_variance=None, _reading = None):
+    async def _fetch_reading(self, _reading=None):
         if _reading is None:
             reading = await self.plt_iface.fetch_ai(self.pin_no)
         else:
             reading = _reading
-            
+
         if reading is None:
             return None
         self.raw_value = reading
@@ -68,11 +68,19 @@ class Sensor420ma:
             return None
         return reading
 
-    async def update(self, _reading = None):
-        reading = await self.get_reading(
-            kf_process_variance=self.process_variance, 
-            _reading=_reading
-        )
+    @apply_async_kalman_filter()
+    async def get_reading(self, kf_process_variance=None, _reading=None):
+        return await self._fetch_reading(_reading=_reading)
+
+    async def update(self, _reading=None):
+        if self.filter_enabled:
+            reading = await self.get_reading(
+                kf_process_variance=self.process_variance,
+                _reading=_reading,
+            )
+        else:
+            reading = await self._fetch_reading(_reading=_reading)
+
         value = self.convert_reading(reading)
         self.filtered_val = value
 
