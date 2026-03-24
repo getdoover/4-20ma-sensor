@@ -55,7 +55,7 @@ class Sensor420ma:
     @apply_async_kalman_filter()
     async def get_reading(self, kf_process_variance=None, _reading = None):
         if _reading is None:
-            reading = await self.plt_iface.get_ai(self.pin_no)
+            reading = await self.plt_iface.fetch_ai(self.pin_no)
         else:
             reading = _reading
             
@@ -88,7 +88,7 @@ class Sensor420ma:
         return converted
         
     async def get_raw_reading(self):
-        val =  await self.plt_iface.get_ai(self.pin_no)
+        val =  await self.plt_iface.fetch_ai(self.pin_no)
         return self.convert_reading(val)
     
     @property
