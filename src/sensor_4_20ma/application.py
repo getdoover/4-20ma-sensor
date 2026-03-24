@@ -23,7 +23,7 @@ class Sensor420maApplication(Application):
         self.loop_target_period = 1.0 / sample_rate
 
         self.sensor = Sensor420ma(
-            self.config.ai_pin.value,
+            int(self.config.ai_pin.value),
             self.platform_iface,
             [self.config.min_range.value, self.config.max_range.value],
             self.config.process_variance.value,
