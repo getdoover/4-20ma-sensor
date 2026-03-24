@@ -1,17 +1,15 @@
 from pydoover import ui
-from .app_config import Sensor420maConfig
 
-class Sensor420maUI:
-    def __init__(self, config: Sensor420maConfig):
-        self.config = config
-        self.filtered_value = ui.NumericVariable(
-            "ai_value",
-            f"{self.config.input_name.value}{self.config.disp_string_units}"
-            )
-        
-    def fetch(self):
-        return [self.filtered_value]
+from .app_tags import Sensor420maTags
 
-    def update(self, filtered_value):
-        self.filtered_value.update(filtered_value)
+
+class Sensor420maUI(ui.UI):
+    curr_val = ui.NumericVariable(
+        "AI Value",
+        value=Sensor420maTags.value,
+    )
+
+    async def setup(self):
+        display_name = f"{self.config.input_name.value}{self.config.disp_string_units}"
+        self.curr_val.display_name = display_name
 

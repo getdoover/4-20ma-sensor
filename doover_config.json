@@ -8,7 +8,6 @@
         "description": "An app for simply convert a 4-20mA signal to a value in the UI. Provide units, measuring range, an analogue input and some ranges and get a analogue value and a loading bar in your ui. ",
         "long_description": "README.md",
         "depends_on": [],
-        "lambda_config": [],
         "owner_org_key": "36a22e32-ab81-4a39-b400-869d532a052d",
         "image_name": "ghcr.io/getdoover/4-20ma-sensor:main",
         "container_registry_profile_key": "88953909-e9c4-4f81-9ec0-56239d4b0a2e",
@@ -16,16 +15,21 @@
         "config_schema": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "$id": "",
-            "title": "Application Config",
+            "title": "$default",
             "type": "object",
             "properties": {
                 "ai_pin_number": {
                     "title": "AI Pin Number",
                     "x-name": "ai_pin_number",
                     "x-hidden": false,
-                    "type": "integer",
+                    "type": [
+                        "integer",
+                        "null"
+                    ],
+                    "x-required": false,
                     "description": "The analog input pin number for the 4-20mA sensor",
                     "default": 0,
+                    "x-position": 0,
                     "minimum": 0,
                     "maximum": 15
                 },
@@ -34,62 +38,177 @@
                     "x-name": "input_name",
                     "x-hidden": false,
                     "type": "string",
-                    "description": "Name for the Input that appears in the UI e.g. Tank Vol (L)"
+                    "x-required": true,
+                    "description": "Name for the Input that appears in the UI e.g. Tank Vol (L)",
+                    "x-position": 1
                 },
                 "min_range": {
                     "title": "Min Range",
                     "x-name": "min_range",
                     "x-hidden": false,
-                    "type": "number",
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "x-required": false,
                     "description": "The physical value corresponding to 4mA signal (minimum sensor reading)",
-                    "default": 0.0
+                    "default": 0.0,
+                    "x-position": 2
                 },
                 "max_range": {
                     "title": "Max Range",
                     "x-name": "max_range",
                     "x-hidden": false,
-                    "type": "number",
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "x-required": false,
                     "description": "The physical value corresponding to 20mA signal (maximum sensor reading)",
-                    "default": 100.0
+                    "default": 100.0,
+                    "x-position": 3
                 },
                 "measurement_units": {
                     "title": "Measurement Units",
                     "x-name": "measurement_units",
                     "x-hidden": false,
-                    "type": "string",
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "x-required": false,
                     "description": "The units for the sensor measurement (e.g., %, \u00b0C, PSI, etc.)",
-                    "default": null
+                    "default": null,
+                    "x-position": 4
                 },
                 "enable_signal_filtering": {
                     "title": "Enable Signal Filtering",
                     "x-name": "enable_signal_filtering",
                     "x-hidden": false,
-                    "type": "boolean",
+                    "type": [
+                        "boolean",
+                        "null"
+                    ],
+                    "x-required": false,
                     "description": "Enable digital filtering to smooth out sensor readings",
-                    "default": true
+                    "default": true,
+                    "x-position": 5
                 },
                 "process_variance": {
                     "title": "Process Variance",
                     "x-name": "process_variance",
                     "x-hidden": false,
-                    "type": "number",
-                    "description": "The process variance for the Kalman Filter running on the in put",
-                    "default": 0.5
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "x-required": false,
+                    "description": "The process variance for the Kalman Filter running on the input",
+                    "default": 0.5,
+                    "x-position": 6
                 },
-                "sample_rate_(hz)": {
+                "sample_rate_hz": {
                     "title": "Sample Rate (Hz)",
-                    "x-name": "sample_rate_(hz)",
+                    "x-name": "sample_rate_hz",
                     "x-hidden": false,
-                    "type": "number",
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "x-required": false,
                     "description": "The sample rate in Hz for the main loop",
                     "default": 2.0,
+                    "x-position": 7,
                     "minimum": 0.1,
                     "maximum": 5.0
+                },
+                "alarm": {
+                    "title": "Alarm",
+                    "x-name": "alarm",
+                    "x-hidden": false,
+                    "type": "object",
+                    "x-required": true,
+                    "description": "Alarm configuration",
+                    "x-position": 8,
+                    "properties": {
+                        "alarm_threshold": {
+                            "title": "Alarm Threshold",
+                            "x-name": "alarm_threshold",
+                            "x-hidden": false,
+                            "type": [
+                                "number",
+                                "null"
+                            ],
+                            "x-required": false,
+                            "description": "The threshold for the alarm",
+                            "default": 0.0,
+                            "x-position": 1,
+                            "minimum": 0.0,
+                            "maximum": 100.0
+                        },
+                        "alarm_message": {
+                            "title": "Alarm Message",
+                            "x-name": "alarm_message",
+                            "x-hidden": false,
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "x-required": false,
+                            "description": "The message for the alarm",
+                            "default": "Alarm",
+                            "x-position": 2
+                        },
+                        "alarm_enabled": {
+                            "title": "Alarm Enabled",
+                            "x-name": "alarm_enabled",
+                            "x-hidden": false,
+                            "type": [
+                                "boolean",
+                                "null"
+                            ],
+                            "x-required": false,
+                            "description": "Enable the alarm",
+                            "default": false,
+                            "x-position": 3
+                        },
+                        "alarm_active": {
+                            "title": "Alarm Active",
+                            "x-name": "alarm_active",
+                            "x-hidden": false,
+                            "type": [
+                                "boolean",
+                                "null"
+                            ],
+                            "x-required": false,
+                            "description": "Enable the alarm",
+                            "default": false,
+                            "x-position": 4
+                        },
+                        "alarm_reset": {
+                            "title": "Alarm Reset",
+                            "x-name": "alarm_reset",
+                            "x-hidden": false,
+                            "type": [
+                                "boolean",
+                                "null"
+                            ],
+                            "x-required": false,
+                            "description": "Reset the alarm",
+                            "default": false,
+                            "x-position": 5
+                        }
+                    },
+                    "additionalElements": true,
+                    "required": [],
+                    "x-collapsible": true,
+                    "x-defaultCollapsed": false
                 }
             },
             "additionalElements": true,
             "required": [
-                "input_name"
+                "input_name",
+                "alarm"
             ]
         },
         "key": "b00594bf-2aff-4bba-865d-024f20f46f4b",

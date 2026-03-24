@@ -5,7 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "pydoover>=0.4.13",
+    "pydoover @ git+https://github.com/getdoover/pydoover.git@doover-2",
     "transitions>=0.9.2",
 ]
 
@@ -26,6 +26,9 @@ dev = [
     "pytest-asyncio>=0.26.0",
     "requests>=2.32.3",
 ]
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/sensor_4_20ma"]
