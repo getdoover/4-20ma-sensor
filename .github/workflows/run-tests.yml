@@ -11,6 +11,9 @@ jobs:
       image: spaneng/doover_device_base
 
     steps:
+      - name: Install git
+        run: apt-get update && apt-get install -y git
+
       - uses: actions/checkout@v4
 
       - name: Install uv
