@@ -77,7 +77,3 @@ class Sensor420maConfig(config.Schema):
 
 def export():
     Sensor420maConfig.export(Path(__file__).parents[2] / "doover_config.json", "4_20ma_sensor")
-
-
-if __name__ == "__main__":
-    export()

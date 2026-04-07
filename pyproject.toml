@@ -1,17 +1,18 @@
 [project]
-name = "4-20ma-sensor"
+name = "sensor-4-20ma"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "pydoover @ git+https://github.com/getdoover/pydoover.git@doover-2",
+    "pydoover==1.0.0a5",
     "transitions>=0.9.2",
 ]
 
 [project.scripts]
 doover-app-run = "sensor_4_20ma:main"
 export-config = "sensor_4_20ma.app_config:export"
+export-ui = "sensor_4_20ma.app_ui:export"
 
 [build-system]
 requires = ["hatchling"]
@@ -20,15 +21,8 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "aiohttp>=3.11.18",
-    "grpcio>=1.71.0",
-    "protobuf>=6.30.2",
+    "grpcio==1.65.1",
+    "protobuf==5.28.2",
     "pytest>=8.3.5",
     "pytest-asyncio>=0.26.0",
-    "requests>=2.32.3",
 ]
-
-[tool.hatch.metadata]
-allow-direct-references = true
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/sensor_4_20ma"]

@@ -13,3 +13,5 @@ class Sensor420maUI(ui.UI):
         display_name = f"{self.config.input_name.value}{self.config.disp_string_units}"
         self.curr_val.display_name = display_name
 
+def export():
+    pass
