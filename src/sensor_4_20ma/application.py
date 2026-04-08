@@ -19,8 +19,12 @@ class Sensor420maApplication(Application):
     async def setup(self):
         self.started = time.time()
 
-        sample_rate = min(self.config.sample_rate.value, 5.0)
-        self.loop_target_period = 1.0 / sample_rate
+        self.default_polling_frequency = min(self.config.sample_rate.value, 5.0)
+        self._set_polling_frequency(self.default_polling_frequency)
+
+        await self.tags.polling_frequency.set(self.default_polling_frequency)
+
+        self.subscribe_to_tag("polling_frequency", self._on_polling_frequency_changed)
 
         self.sensor = Sensor420ma(
             int(self.config.ai_pin.value),
@@ -29,6 +33,17 @@ class Sensor420maApplication(Application):
             self.config.process_variance.value,
             filter_enabled=self.config.signal_filter_enabled.value,
         )
+
+    def _set_polling_frequency(self, hz):
+        hz = max(0.1, min(hz, 5.0))
+        self.loop_target_period = 1.0 / hz
+        log.info(f"Polling frequency set to {hz} Hz (period: {self.loop_target_period:.3f}s)")
+
+    async def _on_polling_frequency_changed(self, key, value):
+        if value is None:
+            return
+        self._set_polling_frequency(float(value))
+        log.info(f"Polling frequency updated by external app to {value} Hz")
 
     async def main_loop(self):
         await self.sensor.update()
