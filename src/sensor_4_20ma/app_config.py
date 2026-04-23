@@ -70,6 +70,11 @@ class Sensor420maConfig(config.Schema):
         minimum=0.1,
         maximum=5.0,
     )
+    multiplot_enabled = config.Boolean(
+        "Enable Multiplot",
+        default=False,
+        description="Show a time-series multiplot of the sensor value in the UI",
+    )
     alarm = AlarmConfig("Alarm", description="Alarm configuration")
 
     @property

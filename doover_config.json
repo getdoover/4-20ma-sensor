@@ -135,6 +135,19 @@
                     "minimum": 0.1,
                     "maximum": 5.0
                 },
+                "enable_multiplot": {
+                    "title": "Enable Multiplot",
+                    "x-name": "enable_multiplot",
+                    "x-hidden": false,
+                    "type": [
+                        "boolean",
+                        "null"
+                    ],
+                    "x-required": false,
+                    "description": "Show a time-series multiplot of the sensor value in the UI",
+                    "default": false,
+                    "x-position": 9
+                },
                 "alarm": {
                     "title": "Alarm",
                     "x-name": "alarm",
@@ -142,7 +155,7 @@
                     "type": "object",
                     "x-required": true,
                     "description": "Alarm configuration",
-                    "x-position": 9,
+                    "x-position": 10,
                     "properties": {
                         "alarm_threshold": {
                             "title": "Alarm Threshold",
