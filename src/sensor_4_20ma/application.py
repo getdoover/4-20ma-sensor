@@ -31,6 +31,7 @@ class Sensor420maApplication(Application):
             self.platform_iface,
             [self.config.min_range.value, self.config.max_range.value],
             self.config.process_variance.value,
+            measurement_variance=self.config.measurement_variance.value,
             filter_enabled=self.config.signal_filter_enabled.value,
         )
 

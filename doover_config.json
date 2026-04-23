@@ -107,6 +107,19 @@
                     "default": 0.5,
                     "x-position": 6
                 },
+                "measurement_variance": {
+                    "title": "Measurement Variance",
+                    "x-name": "measurement_variance",
+                    "x-hidden": false,
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "x-required": false,
+                    "description": "The measurement variance for the Kalman Filter running on the input",
+                    "default": 0.5,
+                    "x-position": 7
+                },
                 "sample_rate_hz": {
                     "title": "Sample Rate (Hz)",
                     "x-name": "sample_rate_hz",
@@ -118,7 +131,7 @@
                     "x-required": false,
                     "description": "The sample rate in Hz for the main loop",
                     "default": 2.0,
-                    "x-position": 7,
+                    "x-position": 8,
                     "minimum": 0.1,
                     "maximum": 5.0
                 },
@@ -129,7 +142,7 @@
                     "type": "object",
                     "x-required": true,
                     "description": "Alarm configuration",
-                    "x-position": 8,
+                    "x-position": 9,
                     "properties": {
                         "alarm_threshold": {
                             "title": "Alarm Threshold",

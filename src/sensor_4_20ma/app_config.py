@@ -58,6 +58,11 @@ class Sensor420maConfig(config.Schema):
         default=0.5,
         description="The process variance for the Kalman Filter running on the input",
     )
+    measurement_variance = config.Number(
+        "Measurement Variance",
+        default=0.5,
+        description="The measurement variance for the Kalman Filter running on the input",
+    )
     sample_rate = config.Number(
         "Sample Rate (Hz)",
         default=2.0,

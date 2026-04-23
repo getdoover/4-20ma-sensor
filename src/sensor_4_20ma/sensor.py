@@ -3,10 +3,11 @@ import asyncio, time, logging
 from pydoover.utils import apply_async_kalman_filter
 
 class Sensor420ma:
-    def __init__(self, pin_no, plt_iface, calibration, process_variance=0.5, filter_enabled=True):
+    def __init__(self, pin_no, plt_iface, calibration, process_variance=0.5, measurement_variance=0.5, filter_enabled=True):
         self.max_values = 10
         self.pin_no = pin_no
         self.process_variance = process_variance
+        self.measurement_variance = measurement_variance
         self.filter_enabled = filter_enabled
         # self.data_store = {}
         self.plt_iface = plt_iface
@@ -77,6 +78,7 @@ class Sensor420ma:
         if self.filter_enabled:
             reading = await self.get_reading(
                 kf_process_variance=self.process_variance,
+                kf_measurement_variance=self.measurement_variance,
                 _reading=_reading,
             )
         else:
