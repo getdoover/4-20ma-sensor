@@ -17,6 +17,7 @@ class Sensor420ma:
         self.calibration_range = self.calibration_high - self.calibration_low
         self.raw_value = None
         self.filtered_val = 0
+        self.unfiltered_val = None
         self.reading_count = 0
 
     ## ensure there is 2 entries for each data series
@@ -83,6 +84,7 @@ class Sensor420ma:
 
         value = self.convert_reading(reading)
         self.filtered_val = value
+        self.unfiltered_val = self.convert_reading(self.raw_value)
 
         self.add_record( value )
 

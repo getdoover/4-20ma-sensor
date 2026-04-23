@@ -52,3 +52,6 @@ class Sensor420maApplication(Application):
 
         await self.tags.value.set(filtered_reading)
         await self.tags.raw_value.set(raw_reading)
+
+        if self.config.signal_filter_enabled.value:
+            await self.tags.unfiltered_value.set(self.sensor.unfiltered_val)
