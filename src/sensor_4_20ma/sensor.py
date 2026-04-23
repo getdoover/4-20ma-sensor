@@ -71,7 +71,8 @@ class Sensor420ma:
         return reading
 
     @apply_async_kalman_filter()
-    async def get_reading(self, kf_process_variance=None, _reading=None):
+    async def get_reading(self, _reading=None, **kwargs):
+        # **kwargs absorbs kf_* kwargs leaked by pydoover<=1.0.0a8 (fixed upstream); harmless once that fix ships.
         return await self._fetch_reading(_reading=_reading)
 
     async def update(self, _reading=None):
