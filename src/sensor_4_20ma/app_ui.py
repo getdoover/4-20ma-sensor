@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydoover import ui
 
 from .app_tags import Sensor420maTags
@@ -27,5 +29,6 @@ class Sensor420maUI(ui.UI):
         self.multiplot.series[0].display_name = display_name
         self.multiplot.series[0].units = self.config.measurement_units.value
 
+
 def export():
-    pass
+    Sensor420maUI(None, None, None).export(Path(__file__).parents[2] / "doover_config.json", "4_20ma_sensor")

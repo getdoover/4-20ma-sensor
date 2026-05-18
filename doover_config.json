@@ -249,6 +249,48 @@
         "code_repo_id": null,
         "export_config_command": null,
         "run_command": null,
-        "lambda_arn": null
+        "lambda_arn": null,
+        "ui_schema": {
+            "displayString": "$config.app().APP_DISPLAY_NAME",
+            "hidden": "$config.app().hidden:boolean:false:boolean:false",
+            "position": "$config.app().dv_app_position:number:100",
+            "icon": null,
+            "colour": null,
+            "defaultOpen": "$config.app().dv_app_default_open:boolean",
+            "type": "uiApplication",
+            "name": "$config.app().APP_KEY",
+            "children": {
+                "ai_value": {
+                    "name": "ai_value",
+                    "type": "uiVariable",
+                    "displayString": "AI Value",
+                    "showActivity": true,
+                    "position": 51,
+                    "hidden": false,
+                    "varType": "float",
+                    "currentValue": "$tag.app().value:number:null",
+                    "live": true
+                },
+                "multiplot": {
+                    "name": "multiplot",
+                    "type": "uiMultiPlot",
+                    "displayString": "Multiplot",
+                    "showActivity": true,
+                    "position": 52,
+                    "hidden": true,
+                    "series": {
+                        "value": {
+                            "name": "value",
+                            "displayString": "Value",
+                            "dataType": "unknown",
+                            "lookup": "$tag.app().value:number:null",
+                            "active": true,
+                            "live": true
+                        }
+                    },
+                    "title": "Multiplot"
+                }
+            }
+        }
     }
 }
