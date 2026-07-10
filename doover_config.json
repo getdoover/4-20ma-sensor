@@ -157,34 +157,6 @@
                     "description": "Alarm configuration",
                     "x-position": 10,
                     "properties": {
-                        "alarm_threshold": {
-                            "title": "Alarm Threshold",
-                            "x-name": "alarm_threshold",
-                            "x-hidden": false,
-                            "type": [
-                                "number",
-                                "null"
-                            ],
-                            "x-required": false,
-                            "description": "The threshold for the alarm",
-                            "default": 0.0,
-                            "x-position": 1,
-                            "minimum": 0.0,
-                            "maximum": 100.0
-                        },
-                        "alarm_message": {
-                            "title": "Alarm Message",
-                            "x-name": "alarm_message",
-                            "x-hidden": false,
-                            "type": [
-                                "string",
-                                "null"
-                            ],
-                            "x-required": false,
-                            "description": "The message for the alarm",
-                            "default": "Alarm",
-                            "x-position": 2
-                        },
                         "alarm_enabled": {
                             "title": "Alarm Enabled",
                             "x-name": "alarm_enabled",
@@ -194,35 +166,81 @@
                                 "null"
                             ],
                             "x-required": false,
-                            "description": "Enable the alarm",
+                            "description": "Send a notification when the reading crosses the alarm point",
                             "default": false,
+                            "x-position": 1
+                        },
+                        "alarm_type": {
+                            "enum": [
+                                "Greater Than",
+                                "Less Than",
+                                "Allowed Range"
+                            ],
+                            "title": "Alarm Type",
+                            "x-name": "alarm_type",
+                            "x-hidden": false,
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "x-required": false,
+                            "description": "Greater Than and Less Than alarm on a single point. Allowed Range alarms when the reading falls outside a low/high band.",
+                            "default": "Greater Than",
+                            "x-position": 2
+                        },
+                        "alarm_slider_minimum": {
+                            "title": "Alarm Slider Minimum",
+                            "x-name": "alarm_slider_minimum",
+                            "x-hidden": false,
+                            "type": [
+                                "number",
+                                "null"
+                            ],
+                            "x-required": false,
+                            "description": "Lower bound of the alarm point slider. Defaults to Min Range.",
+                            "default": null,
                             "x-position": 3
                         },
-                        "alarm_active": {
-                            "title": "Alarm Active",
-                            "x-name": "alarm_active",
+                        "alarm_slider_maximum": {
+                            "title": "Alarm Slider Maximum",
+                            "x-name": "alarm_slider_maximum",
                             "x-hidden": false,
                             "type": [
-                                "boolean",
+                                "number",
                                 "null"
                             ],
                             "x-required": false,
-                            "description": "Enable the alarm",
-                            "default": false,
+                            "description": "Upper bound of the alarm point slider. Defaults to Max Range.",
+                            "default": null,
                             "x-position": 4
                         },
-                        "alarm_reset": {
-                            "title": "Alarm Reset",
-                            "x-name": "alarm_reset",
+                        "alarm_grace_period_s": {
+                            "title": "Alarm Grace Period (s)",
+                            "x-name": "alarm_grace_period_s",
                             "x-hidden": false,
                             "type": [
-                                "boolean",
+                                "number",
                                 "null"
                             ],
                             "x-required": false,
-                            "description": "Reset the alarm",
-                            "default": false,
-                            "x-position": 5
+                            "description": "How long the reading must stay out of bounds before notifying",
+                            "default": 30.0,
+                            "x-position": 5,
+                            "minimum": 0.0
+                        },
+                        "alarm_renotify_interval_s": {
+                            "title": "Alarm Re-notify Interval (s)",
+                            "x-name": "alarm_renotify_interval_s",
+                            "x-hidden": false,
+                            "type": [
+                                "number",
+                                "null"
+                            ],
+                            "x-required": false,
+                            "description": "How often to re-notify while the alarm remains active",
+                            "default": 900.0,
+                            "x-position": 6,
+                            "minimum": 0.0
                         }
                     },
                     "additionalElements": true,
@@ -289,6 +307,32 @@
                         }
                     },
                     "title": "Multiplot"
+                },
+                "alarm_point": {
+                    "name": "alarm_point",
+                    "type": "uiSlider",
+                    "displayString": "Alarm Point",
+                    "position": 53,
+                    "hidden": true,
+                    "currentValue": "$cmds.app().alarm_point",
+                    "min": 0,
+                    "max": 100,
+                    "stepSize": 0.1,
+                    "dualSlider": false,
+                    "isInverted": false
+                },
+                "alarm_range": {
+                    "name": "alarm_range",
+                    "type": "uiSlider",
+                    "displayString": "Allowed Range",
+                    "position": 54,
+                    "hidden": true,
+                    "currentValue": "$cmds.app().alarm_range",
+                    "min": 0,
+                    "max": 100,
+                    "stepSize": 0.1,
+                    "dualSlider": true,
+                    "isInverted": false
                 }
             }
         }

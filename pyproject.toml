@@ -5,7 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "pydoover>=1.4.2",
+    "pydoover>=1.9.0",
     "transitions>=0.9.2",
 ]
 
