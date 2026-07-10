@@ -34,6 +34,7 @@ class StubApp:
     app_display_name = "4-20mA Sensor"
 
     _slider_value = staticmethod(Sensor420maApplication._slider_value)
+    _format_value = staticmethod(Sensor420maApplication._format_value)
     _alarm_bounds = Sensor420maApplication._alarm_bounds
     _alarm_message = Sensor420maApplication._alarm_message
     _check_alarm = Sensor420maApplication._check_alarm
@@ -42,10 +43,14 @@ class StubApp:
         self.config = config
         self.ui = ui
         self.alarm = Alarm(grace_period=0.0, renotify_interval=900.0)
-        self.sent = []
+        self.published = []
 
-    async def send_notification(self, message, *, title=None, severity=None):
-        self.sent.append(message)
+    @property
+    def sent(self):
+        return [data["message"] for _channel, data in self.published]
+
+    async def create_message(self, channel_name, data):
+        self.published.append((channel_name, data))
 
 
 def make_config(**alarm_overrides):
@@ -80,6 +85,31 @@ async def test_greater_than_notification_message():
     app = StubApp(make_config(), StubUI(point=3000))
     await app._check_alarm(4200.0)
     assert app.sent == ["4-20mA Sensor has exceeded 3000 L with a value of 4200 L"]
+
+
+@pytest.mark.asyncio
+async def test_notification_payload_matches_the_data_plane_contract():
+    """severity must be the serde variant name, not the int pydoover emits.
+
+    An int fails to deserialise server-side, and the server then falls back to
+    sending the whole JSON payload as the message body. Omitting the title makes
+    the server substitute the agent's display name.
+    """
+    app = StubApp(make_config(), StubUI(point=3000))
+    await app._check_alarm(4200.0)
+
+    channel, payload = app.published[0]
+    assert channel == "notifications"
+    assert payload["severity"] == "Warn"
+    assert "title" not in payload
+    assert set(payload) == {"message", "severity"}
+
+
+@pytest.mark.asyncio
+async def test_readings_are_rounded_to_two_decimal_places():
+    app = StubApp(make_config(alarm_type="Less Than"), StubUI(point=34.2))
+    await app._check_alarm(4.87925)
+    assert app.sent == ["4-20mA Sensor has dropped below 34.2 L with a value of 4.88 L"]
 
 
 @pytest.mark.asyncio

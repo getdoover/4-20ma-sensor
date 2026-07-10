@@ -62,6 +62,11 @@ class Sensor420maUI(ui.UI):
         self.alarm_point.hidden = not enabled or is_range
         self.alarm_range.hidden = not enabled or not is_range
 
+        # An inverted slider shades [value, max] instead of [min, value]. Invert
+        # for Less Than so the shaded band is the range that does not alarm, the
+        # same way it already reads for Greater Than.
+        self.alarm_point.inverted = alarm_type is AlarmType.less_than
+
         if alarm_type is AlarmType.greater_than:
             self.alarm_point.display_name = "High Alarm Point"
         elif alarm_type is AlarmType.less_than:

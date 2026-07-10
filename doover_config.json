@@ -258,7 +258,10 @@
         "key": "b00594bf-2aff-4bba-865d-024f20f46f4b",
         "code_repo_key": null,
         "repo_branch": "main",
-        "staging_config": {},
+        "staging_config": {
+            "id": 156962407065877255,
+            "container_registry_profile_id": 7369503578182270976
+        },
         "lambda_config": {},
         "owner_org_id": null,
         "container_registry_profile_id": "93955828574386692",
