@@ -1,174 +1,109 @@
-#!/usr/bin/env python3
-
-import time
 import logging
-import asyncio
+import time
+from enum import Enum
+from typing import NamedTuple
 
-## A generic alarm class that can be used to trigger things via a callback function when a threshold is met
-## threshold can be greater than or less than a specified value
-
-## Uses grace_period and min_inter_alarm to prevent rapid triggering of the alarm
-## If threshold is met, the alarm will trigger and the callback will be called
-
-## Grace period is the amount of time which the threshold has to be met before the alarm is triggered again
-## Min inter alarm is the minimum time between alarms
 log = logging.getLogger(__name__)
 
 
+class AlarmType(Enum):
+    greater_than = "Greater Than"
+    less_than = "Less Than"
+    allowed_range = "Allowed Range"
+
+
+class Direction(Enum):
+    exceeded = "exceeded"
+    dropped_below = "dropped below"
+
+
+class Breach(NamedTuple):
+    """A reading that has crossed one of its configured bounds."""
+
+    direction: Direction
+    bound: float
+
+
+def evaluate(value, alarm_type, point=None, low=None, high=None) -> Breach | None:
+    """Check a reading against its bounds, without regard for timing.
+
+    ``point`` is used by the single-sided modes; ``low`` and ``high`` by
+    ``allowed_range``. Returns None when the reading is within bounds, or when
+    the bounds it needs have not been set yet.
+
+    An ``allowed_range`` breach reports the bound that was actually crossed, so
+    a range alarm still resolves to a single direction and a single number.
+    """
+    if value is None:
+        return None
+
+    if alarm_type is AlarmType.greater_than:
+        if point is not None and value > point:
+            return Breach(Direction.exceeded, point)
+    elif alarm_type is AlarmType.less_than:
+        if point is not None and value < point:
+            return Breach(Direction.dropped_below, point)
+    elif alarm_type is AlarmType.allowed_range:
+        if high is not None and value > high:
+            return Breach(Direction.exceeded, high)
+        if low is not None and value < low:
+            return Breach(Direction.dropped_below, low)
+
+    return None
+
+
 class Alarm:
-    def __init__(
-        self,
-        threshold_met,
-        callback=None, #for when alarm is triggered
-        grace_period=None,
-        min_inter_alarm=None,
-        get_threshold_val=None
-    ):
-        self.default_grace_period = 60 * 60  # an hour
-        self.default_min_inter_alarm = 60 * 60 * 24  # a day
+    """Debounces breaches into notifications.
 
-        self.threshold_met = threshold_met
-        self.callback = callback
-        self.grace_period = grace_period or self.default_grace_period
-        self.min_inter_alarm = min_inter_alarm or self.default_min_inter_alarm
-        self.get_threshold_val = get_threshold_val
+    A breach must persist for ``grace_period`` seconds before it notifies, which
+    stops a reading hovering on a bound from firing on every sample. While the
+    breach continues, it re-notifies every ``renotify_interval`` seconds.
 
-        self.last_alarm_time = None
-        self.initial_trigger_time = None
-
-        self.alarm_active = False
-
-    async def check_value(
-        self,
-        value,
-        threshold_met,
-        grace_period=None,
-        min_inter_alarm=None,
-    ):
-        threshold = self.get_threshold_val()
-        print("threshold:", threshold)
-        if threshold is None:
-            return False
-        if grace_period is not None:
-            self.grace_period = grace_period
-
-        if min_inter_alarm is not None:
-            self.min_inter_alarm = min_inter_alarm
-
-        if value is None:
-            return False
-        print(f"checking threshold {threshold} and value {value}")
-        print(f"result is: {self.threshold_met(value, threshold)}")
-
-        if self.threshold_met(value,threshold) is False:
-            self.alarm_active = False
-            log.debug(f"Threshold not met: {value}")
-            self.initial_trigger_time = None
-            return False
-
-        elif not self.alarm_active:
-            log.debug(f"Threshold met: {value}")
-            if self._check_grace_period():
-                log.debug(f"Grace period met: {value}")
-                if self._check_min_inter_alarm():
-                    log.debug(f"Min inter alarm met: {value}")
-                    await self._trigger_alarm()
-                else:
-                    log.debug(f"Min inter alarm not met: {value}")
-            else:
-                log.debug(f"Grace period not met: {value}")
-
-    def _check_grace_period(self):
-        if self.initial_trigger_time is None:
-            self.initial_trigger_time = time.time()
-            return False
-
-        else:
-            if self.initial_trigger_time + self.grace_period < time.time():
-                return True
-            else:
-                return False
-
-    def _check_min_inter_alarm(self):
-        if self.last_alarm_time is None:
-            return True
-        else:
-            if self.last_alarm_time + self.min_inter_alarm < time.time():
-                return True
-            else:
-                return False
-
-    async def _trigger_alarm(self):
-        self.alarm_active = True
-        if self.callback:
-            if asyncio.iscoroutinefunction(self.callback):
-                await self.callback()
-            else:
-                self.callback()
-        self.last_alarm_time = time.time()
-
-    def reset_alarm(self):
-        self.last_alarm_time = None
-        self.initial_trigger_time = None
-
-
-def create_alarm(
-    func,
-    threshold_met,
-    callback=None,
-    grace_period=None,
-    min_inter_alarm=None,
-    get_threshold_val=None
-):
-    """A decorator to check an alarm against the return value of a function
-    The function will fire the inputted callback if the alarm is triggered
-    See below for an example of how to use this decorator
-
-    Parameters
-    ----------
-    threshold_met
-    callback
-    grace_period
-    min_inter_alarm
-
-    Returns
-    -------
-
-    Example
-    -------
-
-        self.get_test_increment = create_alarm(
-            self.get_test_increment,
-            lambda x:x>20,
-            callback=self.test_alarm_callback,
-            grace_period=15,
-            min_inter_alarm=60,
-        )
-
-    async def get_test_increment(self):
-        return self.test_increment
-
-
-    in the above case, the alarm will be checked each time the get_test_increment method is called
-    if the value returned is greater than 20 for at least 15 seconds, the callback will be called
-    the callback will be called at most once every 60 seconds
+    Returning within bounds clears the alarm, so the next breach notifies again
+    once it has served its own grace period.
     """
 
-    alarm = Alarm(
-        threshold_met=threshold_met,
-        callback=callback,
-        grace_period=grace_period,
-        min_inter_alarm=min_inter_alarm,
-        get_threshold_val=get_threshold_val
-    )
+    def __init__(self, grace_period: float = 30.0, renotify_interval: float = 900.0):
+        self.grace_period = grace_period
+        self.renotify_interval = renotify_interval
 
-    async def wrapper(*args, **kwargs):
-        result = await func(*args, **kwargs)
+        self._breach_since = None
+        self._last_notified = None
+        self.active = False
 
-        await alarm.check_value(result, threshold_met)
+    @staticmethod
+    def _now() -> float:
+        # monotonic, so a clock adjustment can't strand an alarm in its grace period
+        return time.monotonic()
 
-        return result
+    def clear(self):
+        self._breach_since = None
+        self._last_notified = None
+        self.active = False
 
-    wrapper.alarm = alarm
+    def update(self, breach: Breach | None) -> bool:
+        """Feed a breach (or None). Returns True when the caller should notify."""
+        if breach is None:
+            if self.active:
+                log.info("Alarm cleared")
+            self.clear()
+            return False
 
-    return wrapper
+        now = self._now()
+
+        if self._breach_since is None:
+            self._breach_since = now
+            log.debug("Breach started: %s %s", breach.direction.value, breach.bound)
+
+        if now - self._breach_since < self.grace_period:
+            return False
+
+        if (
+            self._last_notified is not None
+            and now - self._last_notified < self.renotify_interval
+        ):
+            return False
+
+        self.active = True
+        self._last_notified = now
+        return True

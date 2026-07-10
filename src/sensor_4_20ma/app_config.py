@@ -2,22 +2,45 @@ from pathlib import Path
 
 from pydoover import config
 
+from .alarm import AlarmType
+
 
 class AlarmConfig(config.Object):
-    alarm_threshold = config.Number(
-        "Alarm Threshold", default=0.0, description="The threshold for the alarm", minimum=0.0, maximum=100.0,
-    )
-    alarm_message = config.String(
-        "Alarm Message", default="Alarm", description="The message for the alarm",
-    )
     alarm_enabled = config.Boolean(
-        "Alarm Enabled", default=False, description="Enable the alarm",
+        "Alarm Enabled",
+        default=False,
+        description="Send a notification when the reading crosses the alarm point",
     )
-    alarm_active = config.Boolean(
-        "Alarm Active", default=False, description="Enable the alarm",
+    alarm_type = config.Enum(
+        "Alarm Type",
+        choices=AlarmType,
+        default=AlarmType.greater_than,
+        description=(
+            "Greater Than and Less Than alarm on a single point. Allowed Range "
+            "alarms when the reading falls outside a low/high band."
+        ),
     )
-    alarm_reset = config.Boolean(
-        "Alarm Reset", default=False, description="Reset the alarm",
+    slider_min = config.Number(
+        "Alarm Slider Minimum",
+        default=None,
+        description="Lower bound of the alarm point slider. Defaults to Min Range.",
+    )
+    slider_max = config.Number(
+        "Alarm Slider Maximum",
+        default=None,
+        description="Upper bound of the alarm point slider. Defaults to Max Range.",
+    )
+    grace_period = config.Number(
+        "Alarm Grace Period (s)",
+        default=30.0,
+        description="How long the reading must stay out of bounds before notifying",
+        minimum=0.0,
+    )
+    renotify_interval = config.Number(
+        "Alarm Re-notify Interval (s)",
+        default=900.0,
+        description="How often to re-notify while the alarm remains active",
+        minimum=0.0,
     )
 
 
@@ -83,6 +106,24 @@ class Sensor420maConfig(config.Schema):
             return ""
         else:
             return f" ({self.measurement_units.value})"
+
+    @property
+    def alarm_type(self) -> AlarmType:
+        # config.Enum stringifies its default but maps injected values back to
+        # members, so .value is a member or a str depending on whether the
+        # deployment config was injected. Normalise to a member either way.
+        value = self.alarm.alarm_type.value
+        return value if isinstance(value, AlarmType) else AlarmType(value)
+
+    @property
+    def alarm_slider_min(self) -> float:
+        value = self.alarm.slider_min.value
+        return self.min_range.value if value is None else value
+
+    @property
+    def alarm_slider_max(self) -> float:
+        value = self.alarm.slider_max.value
+        return self.max_range.value if value is None else value
 
 
 def export():
