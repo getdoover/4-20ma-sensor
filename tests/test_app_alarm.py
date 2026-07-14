@@ -66,7 +66,6 @@ def make_config(**alarm_overrides):
             "process_variance": 0.5,
             "measurement_variance": 0.5,
             "sample_rate_hz": 2.0,
-            "enable_multiplot": False,
             "alarm": {"alarm_enabled": True, **alarm_overrides},
         }
     )
