@@ -135,19 +135,6 @@
                     "minimum": 0.1,
                     "maximum": 5.0
                 },
-                "enable_multiplot": {
-                    "title": "Enable Multiplot",
-                    "x-name": "enable_multiplot",
-                    "x-hidden": false,
-                    "type": [
-                        "boolean",
-                        "null"
-                    ],
-                    "x-required": false,
-                    "description": "Show a time-series multiplot of the sensor value in the UI",
-                    "default": false,
-                    "x-position": 9
-                },
                 "alarm": {
                     "title": "Alarm",
                     "x-name": "alarm",
@@ -155,7 +142,7 @@
                     "type": "object",
                     "x-required": true,
                     "description": "Alarm configuration",
-                    "x-position": 10,
+                    "x-position": 9,
                     "properties": {
                         "alarm_enabled": {
                             "title": "Alarm Enabled",
@@ -292,30 +279,11 @@
                     "currentValue": "$tag.app().value:number:null",
                     "live": true
                 },
-                "multiplot": {
-                    "name": "multiplot",
-                    "type": "uiMultiPlot",
-                    "displayString": "Multiplot",
-                    "showActivity": true,
-                    "position": 52,
-                    "hidden": true,
-                    "series": {
-                        "value": {
-                            "name": "value",
-                            "displayString": "Value",
-                            "dataType": "unknown",
-                            "lookup": "$tag.app().value:number:null",
-                            "active": true,
-                            "live": true
-                        }
-                    },
-                    "title": "Multiplot"
-                },
                 "alarm_point": {
                     "name": "alarm_point",
                     "type": "uiSlider",
                     "displayString": "Alarm Point",
-                    "position": 53,
+                    "position": 52,
                     "hidden": true,
                     "currentValue": "$cmds.app().alarm_point",
                     "min": 0,
@@ -328,7 +296,7 @@
                     "name": "alarm_range",
                     "type": "uiSlider",
                     "displayString": "Allowed Range",
-                    "position": 54,
+                    "position": 53,
                     "hidden": true,
                     "currentValue": "$cmds.app().alarm_range",
                     "min": 0,
