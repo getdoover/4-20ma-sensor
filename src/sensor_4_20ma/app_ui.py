@@ -30,8 +30,7 @@ class Sensor420maUI(ui.UI):
     )
 
     async def setup(self):
-        display_name = f"{self.config.input_name.value}{self.config.disp_string_units}"
-        self.curr_val.display_name = display_name
+        self.curr_val.units = self.config.disp_string_units
 
         self._setup_alarm()
 
