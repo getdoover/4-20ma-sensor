@@ -8,7 +8,7 @@
         "allow_many": true,
         "description": "An app for simply convert a 4-20mA signal to a value in the UI. Provide units, measuring range, an analogue input and some ranges and get a analogue value and a loading bar in your ui. ",
         "long_description": "README.md",
-        "depends_on": [],
+        "depends_on": ["platform_interface"],
         "organisation_id": null,
         "image_name": "registry.doover.com/apps/4_20ma_sensor:main",
         "build_args": "--platform linux/amd64,linux/arm64",
