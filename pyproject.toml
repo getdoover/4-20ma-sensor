@@ -1,12 +1,11 @@
 [project]
 name = "sensor-4-20ma"
 version = "0.1.0"
-description = "Add your description here"
+description = "Doover device app for reading and alarming on a 4-20mA analog sensor input."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "pydoover>=1.9.0",
-    "transitions>=0.9.2",
+    "pydoover>=1.9.1",
 ]
 
 [project.scripts]
