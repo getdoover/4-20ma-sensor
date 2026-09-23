@@ -5,9 +5,11 @@ which needs a device agent connection.
 """
 
 import pytest
+from pydoover.models import NotificationSeverity
 
 from sensor_4_20ma.alarm import Alarm
 from sensor_4_20ma.app_config import Sensor420maConfig
+from sensor_4_20ma.app_notifications import Sensor420maNotifications
 from sensor_4_20ma.application import Sensor420maApplication
 
 
@@ -44,10 +46,16 @@ class StubApp:
         self.ui = ui
         self.alarm = Alarm(grace_period=0.0, renotify_interval=900.0)
         self.published = []
+        # The real declarations, bound to this stub, so the tests exercise the
+        # topic and severity the app actually sends rather than a copy of them.
+        self.notifications = Sensor420maNotifications("4_20ma_sensor_1", self)
 
     @property
     def sent(self):
         return [data["message"] for _channel, data in self.published]
+
+    async def send_notification(self, message, **kwargs):
+        self.published.append(("notifications", {"message": message, **kwargs}))
 
     async def create_message(self, channel_name, data):
         self.published.append((channel_name, data))
@@ -87,21 +95,23 @@ async def test_greater_than_notification_message():
 
 
 @pytest.mark.asyncio
-async def test_notification_payload_matches_the_data_plane_contract():
-    """severity must be the serde variant name, not the int pydoover emits.
+async def test_notification_carries_the_canonical_topic():
+    """The topic is what the site filters on, per notification.
 
-    An int fails to deserialise server-side, and the server then falls back to
-    sending the whole JSON payload as the message body. Omitting the title makes
-    the server substitute the agent's display name.
+    Sending without one puts the notification in the legacy bucket, where a
+    subscriber can only take every app notification or none of them. The
+    string is spelled out rather than rebuilt from the declaration because it
+    is a contract shared with the API and the subscription editor.
     """
     app = StubApp(make_config(), StubUI(point=3000))
     await app._check_alarm(4200.0)
 
     channel, payload = app.published[0]
     assert channel == "notifications"
-    assert payload["severity"] == "Warn"
-    assert "title" not in payload
-    assert set(payload) == {"message", "severity"}
+    assert str(payload["topic"]) == "dev/applications/default/4_20ma_sensor_1/alarm"
+    assert payload["severity"] is NotificationSeverity.Warn
+    # No title: the server substitutes the agent's display name.
+    assert payload["title"] is None
 
 
 @pytest.mark.asyncio

@@ -5,7 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "pydoover>=1.9.0",
+    "pydoover>=1.17.1",
     "transitions>=0.9.2",
 ]
 
@@ -13,6 +13,7 @@ dependencies = [
 doover-app-run = "sensor_4_20ma:main"
 export-config = "sensor_4_20ma.app_config:export"
 export-ui = "sensor_4_20ma.app_ui:export"
+export-notifications = "sensor_4_20ma.app_notifications:export"
 
 [build-system]
 requires = ["hatchling"]
