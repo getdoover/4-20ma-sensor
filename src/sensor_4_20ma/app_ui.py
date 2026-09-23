@@ -8,8 +8,9 @@ from .app_tags import Sensor420maTags
 
 class Sensor420maUI(ui.UI):
     curr_val = ui.NumericVariable(
-        "AI Value",
+        "$config.app().input_name",
         value=Sensor420maTags.value,
+        units="$config.app().measurement_units"
     )
     # A single slider reports a number and a dual slider reports [low, high], so
     # each mode gets its own element. One element toggling dual_slider would
@@ -30,11 +31,6 @@ class Sensor420maUI(ui.UI):
     )
 
     async def setup(self):
-        self.curr_val.units = self.config.disp_string_units
-
-        self._setup_alarm()
-
-    def _setup_alarm(self):
         alarm_type = self.config.alarm_type
         enabled = self.config.alarm.alarm_enabled.value
         is_range = alarm_type is AlarmType.allowed_range

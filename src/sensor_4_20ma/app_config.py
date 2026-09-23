@@ -96,13 +96,6 @@ class Sensor420maConfig(config.Schema):
     alarm = AlarmConfig("Alarm", description="Alarm configuration")
 
     @property
-    def disp_string_units(self):
-        if self.measurement_units.value is None:
-            return ""
-        else:
-            return f" ({self.measurement_units.value})"
-
-    @property
     def alarm_type(self) -> AlarmType:
         # config.Enum stringifies its default but maps injected values back to
         # members, so .value is a member or a str depending on whether the
