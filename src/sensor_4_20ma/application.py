@@ -1,6 +1,7 @@
 import logging
 import time
 
+from pydoover import ui
 from pydoover.docker import Application
 
 from .alarm import Alarm, AlarmType, evaluate
@@ -8,9 +9,14 @@ from .app_config import Sensor420maConfig
 from .app_notifications import Sensor420maNotifications
 from .app_tags import Sensor420maTags
 from .app_ui import Sensor420maUI
+from .operator_calibration import RESET, RPC_PATTERN, OperatorCalibration
 from .sensor import Sensor420ma
 
 log = logging.getLogger()
+
+# Bounded wait for the ui_cmds aggregate at startup (operator calibration only).
+UI_CMDS_SYNC_TIMEOUT_SECS = 10
+UI_CMDS_SYNC_POLL_SECS = 0.25
 
 
 class Sensor420maApplication(Application):
@@ -43,6 +49,65 @@ class Sensor420maApplication(Application):
             renotify_interval=self.config.alarm.renotify_interval.value,
         )
 
+        # The flag is held from here on (see OperatorCalibration.latch_enabled).
+        if self.calibration.latch_enabled():
+            # The operator values live in ui_cmds, which pydoover subscribes
+            # but does not wait for; an offline boot falls back to the tags.
+            self.ui_cmds_synced = await self._await_ui_cmds_sync()
+            self.calibration.restore()
+        else:
+            await self.calibration.clear_stale_tags()
+
+    @property
+    def calibration(self) -> OperatorCalibration:
+        """Operator sensor calibration. Created on first use: its RPCs can
+        arrive before setup() has run."""
+        calibration = self.__dict__.get("_calibration")
+        if calibration is None:
+            calibration = self._calibration = OperatorCalibration(self)
+        return calibration
+
+    async def _await_ui_cmds_sync(self) -> bool:
+        """Wait (bounded) for ui_cmds and confirm it was delivered. Never
+        raises; False on timeout or when the device agent cannot serve it
+        (offline reboot).
+
+        pydoover marks a channel synced even when seeding its aggregate
+        failed, so the wait alone does not mean the values arrived. The
+        aggregate is fetched as well (pydoover does the same for
+        deployment_config): from the cache when the seed worked, else from
+        the device agent, which raises when it cannot serve it. A fetched
+        aggregate that ui_manager has not seen yet (a failed seed, or its
+        sync event not dispatched yet) is handed to it, as its own sync
+        event would.
+        """
+        try:
+            synced = await self.device_agent.wait_for_channels_sync(
+                ["ui_cmds"],
+                timeout=UI_CMDS_SYNC_TIMEOUT_SECS,
+                inter_wait=UI_CMDS_SYNC_POLL_SECS,
+            )
+            aggregate = None
+            if synced:
+                aggregate = await self.device_agent.fetch_channel_aggregate("ui_cmds")
+        except Exception as e:  # noqa: BLE001 - must not stop the app starting
+            log.warning(
+                f"Could not read ui_cmds: {e}; using the persisted calibration "
+                "tags until it syncs"
+            )
+            return False
+        if not synced:
+            log.warning(
+                f"ui_cmds did not sync within {UI_CMDS_SYNC_TIMEOUT_SECS}s; "
+                "using the persisted calibration tags until it does"
+            )
+            return False
+        data = getattr(aggregate, "data", None)
+        values = data.get(self.app_key) if isinstance(data, dict) else None
+        if isinstance(values, dict) and values and not self.ui_manager.values:
+            self.ui_manager.values = values
+        return True
+
     def _set_polling_frequency(self, hz):
         hz = max(0.1, min(hz, 5.0))
         self.loop_target_period = 1.0 / hz
@@ -55,6 +120,12 @@ class Sensor420maApplication(Application):
         log.info(f"Polling frequency updated by external app to {value} Hz")
 
     async def main_loop(self):
+        calibration = None
+        if self.calibration.enabled:
+            await self.calibration.repersist()
+            calibration = self.calibration.effective()
+            self.sensor.set_calibration(*calibration)
+
         await self.sensor.update()
         filtered_reading = self.sensor.value
         raw_reading = self.sensor.raw_value
@@ -65,7 +136,25 @@ class Sensor420maApplication(Application):
         if self.config.signal_filter_enabled.value:
             await self.tags.unfiltered_value.set(self.sensor.unfiltered_val)
 
+        if calibration is not None:
+            await self.calibration.publish_tags(calibration)
+
         await self._check_alarm(filtered_reading)
+
+    @ui.handler(RPC_PATTERN, auto_update=False)
+    async def on_calibration_value(self, ctx, value):
+        """``range_low`` / ``range_high`` / ``offset`` (cloud input and HMI).
+
+        No ``parser=float``: pydoover reports a parser exception as
+        INTERNAL_ERROR, so the value is parsed in the handler and a
+        non-numeric one gets INVALID like an out-of-range one. The value is
+        persisted by the handler, so a refused one leaves the stored value.
+        """
+        return await self.calibration.request(ctx.method, value)
+
+    @ui.handler(RESET, auto_update=False)
+    async def on_reset_calibration(self, ctx, value):
+        return await self.calibration.request_reset()
 
     @staticmethod
     def _slider_value(slider):

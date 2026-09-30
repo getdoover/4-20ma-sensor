@@ -30,6 +30,17 @@ Convert a 4-20mA signal to a value in the UI. Provide units, measuring range, an
 | **Max Range** | The physical value corresponding to 20mA signal | `100.0` |
 | **Measurement Units** | Units for the sensor measurement | `None` |
 | **Enable Signal Filtering** | Enable digital filtering to smooth readings | `true` |
+| **Operator Sensor Calibration** | Let operators adjust Range Low, Range High and an Offset on site (see below) | `false` |
+
+### Operator Sensor Calibration
+
+With **Operator Sensor Calibration** on, a **Sensor Calibration** panel lets an operator set, without a redeploy:
+
+- **Range Low** - the value at 4 mA (defaults to Min Range)
+- **Range High** - the value at 20 mA (defaults to Max Range)
+- **Offset** - added after scaling (defaults to 0)
+
+A change applies to the next reading. **Reset to configured values** clears the operator values, so all three go back to the configuration and keep following it: if Min Range or Max Range is changed later, the new value takes effect (and shows in the panel) without pressing Reset again. A value an operator sets, even one equal to the configured value, stays until the next Reset. The same settings are RPCs on `ui_cmds` (`range_low`, `range_high`, `offset`, `reset_calibration`), so a local HMI can set them too. Range High must be above Range Low and the offset within +/- the range; anything else is refused with `INVALID`. With the setting off the panel is hidden, the RPCs are refused with `UNAVAILABLE` and the app behaves exactly as before. Like the other settings, switching it on or off takes effect when the app next starts.
 
 <br/>
 
@@ -42,7 +53,10 @@ This app exposes the following tags for integration with other apps:
 | Tag | Description |
 |-----|-------------|
 | `value` | The filtered sensor reading in configured units |
-| `raw_value` | The raw unfiltered sensor reading |
+| `raw_value` | The loop current in mA, unfiltered |
+| `unfiltered_value` | The unfiltered reading in configured units (with signal filtering on) |
+| `range_low`, `range_high`, `offset` | The operator calibration in effect (only with Operator Sensor Calibration on) |
+| `operator_calibration` | `true` while Operator Sensor Calibration is on |
 
 <br/>
 This is a standalone app with no dependencies on other Doover apps.

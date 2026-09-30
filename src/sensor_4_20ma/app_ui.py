@@ -4,6 +4,7 @@ from pydoover import ui
 
 from .alarm import AlarmType
 from .app_tags import Sensor420maTags
+from .operator_calibration import MAX_ABS_VALUE, RESET, VALUES
 
 
 class Sensor420maUI(ui.UI):
@@ -29,6 +30,31 @@ class Sensor420maUI(ui.UI):
         inverted=False,
         hidden=True,
     )
+    # Operator sensor calibration (operator_calibration.py). Hidden unless the
+    # config enables it; the RPC handler validates, and the defaults follow the
+    # config in setup.
+    sensor_calibration = ui.Submodule(
+        "Sensor Calibration",
+        children=[
+            *(
+                ui.FloatInput(
+                    value.label,
+                    min_val=-MAX_ABS_VALUE,
+                    max_val=MAX_ABS_VALUE,
+                    default=value.default(None),
+                    name=value.name,
+                )
+                for value in VALUES
+            ),
+            ui.Button(
+                "Reset to configured values",
+                requires_confirm=True,
+                name=RESET,
+            ),
+        ],
+        name="sensor_calibration",
+        hidden=True,
+    )
 
     async def setup(self):
         alarm_type = self.config.alarm_type
@@ -52,6 +78,22 @@ class Sensor420maUI(ui.UI):
             self.alarm_point.display_name = "High Alarm Point"
         elif alarm_type is AlarmType.less_than:
             self.alarm_point.display_name = "Low Alarm Point"
+
+        self._setup_sensor_calibration()
+
+    def _setup_sensor_calibration(self):
+        enabled = bool(self.config.operator_calibration_enabled.value)
+        self.sensor_calibration.hidden = not enabled
+        units = self.config.measurement_units.value
+        for value in VALUES:
+            element = getattr(self.sensor_calibration, value.name)
+            default = value.default(self.config)
+            element.default = default
+            # The shown value falls back to the default baked into the lookup
+            # at construction, so point it at the config default too.
+            element._value_location = f"$cmds.app().{value.name}::{default}"
+            if units:
+                element.display_name = f"{value.label} ({units})"
 
 
 def export():

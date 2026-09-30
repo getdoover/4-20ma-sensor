@@ -13,13 +13,22 @@ class Sensor420ma:
         self.plt_iface = plt_iface
         self.data_store = []
         self.reading = [0,0,0,0]
-        self.calibration_low = calibration[0]
-        self.calibration_high = calibration[1] 
-        self.calibration_range = self.calibration_high - self.calibration_low
+        self.set_calibration(calibration[0], calibration[1])
         self.raw_value = None
         self.filtered_val = 0
         self.unfiltered_val = None
         self.reading_count = 0
+
+    def set_calibration(self, low, high, offset=0.0):
+        """Re-point the mA -> engineering mapping (operator calibration).
+
+        Takes effect on the next conversion. The Kalman filter runs on the loop
+        current in mA before this mapping, so its state is unaffected.
+        """
+        self.calibration_low = low
+        self.calibration_high = high
+        self.calibration_range = self.calibration_high - self.calibration_low
+        self.offset = offset
 
     ## ensure there is 2 entries for each data series
     def is_initialised(self):
@@ -98,6 +107,8 @@ class Sensor420ma:
         if reading < 0 and reading > -0.5:
             reading = 0
         converted = (reading/16)*self.calibration_range + self.calibration_low
+        if self.offset:
+            converted += self.offset
         return converted
         
     async def get_raw_reading(self):

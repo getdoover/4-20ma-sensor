@@ -94,6 +94,16 @@ class Sensor420maConfig(config.Schema):
         maximum=5.0,
     )
     alarm = AlarmConfig("Alarm", description="Alarm configuration")
+    operator_calibration_enabled = config.Boolean(
+        "Operator Sensor Calibration",
+        name="operator_calibration_enabled",
+        default=False,
+        description=(
+            "Let operators adjust Range Low, Range High and an Offset from the "
+            "Sensor Calibration panel and the local HMI. Min Range and Max "
+            "Range stay the defaults, and Reset puts them back."
+        ),
+    )
 
     @property
     def alarm_type(self) -> AlarmType:
