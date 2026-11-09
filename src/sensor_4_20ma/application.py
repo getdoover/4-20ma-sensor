@@ -26,6 +26,15 @@ class Sensor420maApplication(Application):
     notifications_cls = Sensor420maNotifications
 
     async def setup(self):
+        # pydoover's run_app stamps the app key onto every component it knows
+        # about after construction — but not onto the notifications set, which
+        # was built with ``app_key=None`` and so refused every send with
+        # "Application key has not been set". pydoover exits the app on that,
+        # so the first alarm or sensor fault crash-loops it (seen on station-8,
+        # 2026-11-09). Fixed upstream in pydoover; harmless once that lands.
+        if self.notifications is not None and not self.notifications.app_key:
+            self.notifications.app_key = self.app_key
+
         self.started = time.time()
 
         self.default_polling_frequency = min(self.config.sample_rate.value, 5.0)
