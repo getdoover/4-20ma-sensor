@@ -12,3 +12,9 @@ class Sensor420maTags(Tags):
     range_high = Tag("number", default=None, live=True)
     offset = Tag("number", default=None, live=True)
     operator_calibration = Tag("boolean", default=None, live=True)
+    # Alarm gate (alarm.alarm_enable_tag): published only while it is set.
+    alarm_armed = Tag("boolean", default=None, live=True)
+    alarm_status = Tag("string", default=None, live=True)
+    # Sensor fault alarm: published only while it is enabled.
+    sensor_fault = Tag("boolean", default=None, live=True)
+    sensor_status = Tag("string", default=None, live=True)

@@ -22,6 +22,16 @@ class Sensor420maNotifications(notifications.Notifications):
         ),
         severity=notifications.NotificationSeverity.Warn,
     )
+    sensor_fault = notifications.Notification(
+        "The sensor loop current is below 3.5 mA",
+        display_name="Sensor Fault",
+        description=(
+            "Sent when the loop current stays below 3.5 mA (a broken wire or "
+            "failed transmitter), if the Sensor Fault Alarm is enabled, and "
+            "again on each renotify interval while it stays there."
+        ),
+        severity=notifications.NotificationSeverity.Warn,
+    )
 
 
 def export():

@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from pydoover import ui
@@ -28,6 +29,21 @@ class Sensor420maUI(ui.UI):
         name="alarm_range",
         dual_slider=True,
         inverted=False,
+        hidden=True,
+    )
+    # Shown only when the alarm has an Alarm Enable Tag: armed, arming, or
+    # why it is disarmed.
+    alarm_status = ui.TextVariable(
+        "Alarm Status",
+        value=Sensor420maTags.alarm_status,
+        name="alarm_status",
+        hidden=True,
+    )
+    # Shown only when the Sensor Fault Alarm is enabled.
+    sensor_status = ui.TextVariable(
+        "Sensor Status",
+        value=Sensor420maTags.sensor_status,
+        name="sensor_status",
         hidden=True,
     )
     # Operator sensor calibration (operator_calibration.py). Hidden unless the
@@ -79,7 +95,29 @@ class Sensor420maUI(ui.UI):
         elif alarm_type is AlarmType.less_than:
             self.alarm_point.display_name = "Low Alarm Point"
 
+        self._seed_alarm_defaults()
+        self.alarm_status.hidden = not enabled or self.config.alarm_enable_tag is None
+        self.sensor_status.hidden = not self.config.sensor_fault_alarm_enabled.value
+
         self._setup_sensor_calibration()
+
+    def _seed_alarm_defaults(self):
+        """Show the configured default setpoints on sliders never moved.
+
+        The app falls back to the same values (Application._alarm_bounds), so
+        what the slider shows is what it alarms on until an operator moves it.
+        """
+        point = self.config.alarm_default_point
+        if point is not None:
+            self.alarm_point.default = point
+            self.alarm_point._value_location = f"$cmds.app().alarm_point::{point}"
+
+        value_range = self.config.alarm_default_range
+        if value_range is not None:
+            self.alarm_range.default = value_range
+            self.alarm_range._value_location = (
+                f"$cmds.app().alarm_range::{json.dumps(value_range)}"
+            )
 
     def _setup_sensor_calibration(self):
         enabled = bool(self.config.operator_calibration_enabled.value)

@@ -4,13 +4,13 @@ import time
 from pydoover import ui
 from pydoover.docker import Application
 
-from .alarm import Alarm, AlarmType, evaluate
+from .alarm import Alarm, AlarmGate, AlarmType, Breach, Direction, evaluate
 from .app_config import Sensor420maConfig
 from .app_notifications import Sensor420maNotifications
 from .app_tags import Sensor420maTags
 from .app_ui import Sensor420maUI
 from .operator_calibration import RESET, RPC_PATTERN, OperatorCalibration
-from .sensor import Sensor420ma
+from .sensor import MIN_VALID_MA, Sensor420ma
 
 log = logging.getLogger()
 
@@ -45,6 +45,17 @@ class Sensor420maApplication(Application):
         )
 
         self.alarm = Alarm(
+            grace_period=self.config.alarm.grace_period.value,
+            renotify_interval=self.config.alarm.renotify_interval.value,
+        )
+        # Optional: arm the alarm only while another app's tag is above a
+        # threshold (e.g. engine RPM), so a stopped machine does not alarm.
+        self.alarm_gate = AlarmGate(
+            threshold=self.config.alarm.enable_threshold.value,
+            delay=self.config.alarm.enable_delay.value,
+        )
+        # Optional: a broken loop (< 3.5 mA) has its own grace and notification.
+        self.sensor_fault_alarm = Alarm(
             grace_period=self.config.alarm.grace_period.value,
             renotify_interval=self.config.alarm.renotify_interval.value,
         )
@@ -141,6 +152,9 @@ class Sensor420maApplication(Application):
 
         await self._check_alarm(filtered_reading)
 
+        if self.config.sensor_fault_alarm_enabled.value:
+            await self._check_sensor_fault(raw_reading)
+
     @ui.handler(RPC_PATTERN, auto_update=False)
     async def on_calibration_value(self, ctx, value):
         """``range_low`` / ``range_high`` / ``offset`` (cloud input and HMI).
@@ -173,16 +187,28 @@ class Sensor420maApplication(Application):
         """
         if self.config.alarm_type is AlarmType.allowed_range:
             value = self._slider_value(self.ui.alarm_range)
+            if value is None:
+                # never moved: the configured default range, if any
+                value = self.config.alarm_default_range
             # the dual slider reports [low, high]
             if not isinstance(value, (list, tuple)) or len(value) != 2:
                 return None, None, None
             low, high = sorted(value)
             return None, low, high
 
-        return self._slider_value(self.ui.alarm_point), None, None
+        point = self._slider_value(self.ui.alarm_point)
+        if point is None:
+            point = self.config.alarm_default_point
+        return point, None, None
 
     async def _check_alarm(self, reading):
         if not self.config.alarm.alarm_enabled.value:
+            self.alarm.clear()
+            return
+
+        if self.config.alarm_enable_tag is not None and not await self._alarm_armed():
+            # Disarmed drops any active alarm without a notification, and
+            # once re-armed a breach serves its full grace period again.
             self.alarm.clear()
             return
 
@@ -196,6 +222,43 @@ class Sensor420maApplication(Application):
             # is the device name and is what an operator expects to see.
             await self.notifications.alarm.send(
                 self._alarm_message(reading, breach)
+            )
+
+    async def _alarm_armed(self) -> bool:
+        """Update the alarm gate from its enable tag and publish its status."""
+        app_key, tag_name = self.config.alarm_enable_tag
+        armed = self.alarm_gate.update(self.get_tag(tag_name, app_key=app_key))
+
+        if armed:
+            status = "Alarm armed"
+        elif self.alarm_gate.remaining() > 0:
+            delay = self._format_value(self.alarm_gate.delay)
+            status = f"Alarm arming ({delay} s delay)"
+        else:
+            status = self.config.alarm_disarmed_text
+
+        await self.tags.alarm_armed.set(armed)
+        await self.tags.alarm_status.set(status)
+        return armed
+
+    async def _check_sensor_fault(self, raw_reading):
+        """Notify when the loop current stays below the valid 4-20 mA range.
+
+        A failed read (None) is not a fault: the loop may be fine.
+        """
+        fault = raw_reading is not None and raw_reading < MIN_VALID_MA
+        breach = Breach(Direction.dropped_below, MIN_VALID_MA) if fault else None
+
+        await self.tags.sensor_fault.set(fault)
+        await self.tags.sensor_status.set(
+            f"Sensor fault: {self._format_value(raw_reading)} mA" if fault else "OK"
+        )
+
+        if self.sensor_fault_alarm.update(breach):
+            await self.notifications.sensor_fault.send(
+                f"{self.app_display_name} sensor fault: loop current is "
+                f"{self._format_value(raw_reading)} mA, below "
+                f"{self._format_value(MIN_VALID_MA)} mA"
             )
 
     @staticmethod
