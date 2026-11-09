@@ -11,6 +11,7 @@ import pytest
 from pydoover.rpc import RPCError
 
 from sensor_4_20ma.app_config import Sensor420maConfig
+from sensor_4_20ma.app_notifications import Sensor420maNotifications
 from sensor_4_20ma.app_ui import Sensor420maUI
 from sensor_4_20ma.application import Sensor420maApplication
 from sensor_4_20ma.operator_calibration import (
@@ -154,6 +155,8 @@ class StubApp:
         )
         self.checked = []
         self.device_agent = FakeDeviceAgent()
+        # Built the way pydoover's run_app builds it: without the app key.
+        self.notifications = Sensor420maNotifications(None, self)
 
     def subscribe_to_tag(self, key, callback):
         pass
@@ -288,6 +291,19 @@ async def test_off_never_enabled_writes_no_tags_at_setup():
     app = StubApp(make_config(enabled=False), ui_values={})
     await app.calibration.clear_stale_tags()
     assert app.tags.writes == []
+
+
+@pytest.mark.asyncio
+async def test_setup_gives_the_notifications_the_app_key():
+    """Without it the first send raises and pydoover exits the app."""
+    app = StubApp(make_config(enabled=False), ui_values={})
+    assert app.notifications.app_key is None
+    await app.setup()
+    assert app.notifications.app_key == "pressure_sensor_1"
+    assert (
+        str(app.notifications.alarm.topic)
+        == "dev/applications/default/pressure_sensor_1/alarm"
+    )
 
 
 # --------------------------------------------------------------------------
