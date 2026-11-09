@@ -57,7 +57,8 @@ class Alarm:
 
     A breach must persist for ``grace_period`` seconds before it notifies, which
     stops a reading hovering on a bound from firing on every sample. While the
-    breach continues, it re-notifies every ``renotify_interval`` seconds.
+    breach continues, it re-notifies every ``renotify_interval`` seconds; an
+    interval of zero or less means it notifies once and never re-notifies.
 
     Returning within bounds clears the alarm, so the next breach notifies again
     once it has served its own grace period.
@@ -98,12 +99,69 @@ class Alarm:
         if now - self._breach_since < self.grace_period:
             return False
 
-        if (
-            self._last_notified is not None
-            and now - self._last_notified < self.renotify_interval
+        if self._last_notified is not None and (
+            # <= 0 means "never re-notify". Without this, 0 re-notified on
+            # every sample, which is never what an operator meant by it.
+            self.renotify_interval <= 0
+            or now - self._last_notified < self.renotify_interval
         ):
             return False
 
         self.active = True
         self._last_notified = now
         return True
+
+
+class AlarmGate:
+    """Arms the alarm only while an enabling signal holds, e.g. engine running.
+
+    The gate is armed once the signal has been above ``threshold`` for
+    ``delay`` seconds without a break. A missing or non-numeric signal counts
+    as below the threshold: with no proof the condition holds, the alarm
+    stays disarmed. Any dip restarts the delay.
+    """
+
+    def __init__(self, threshold: float = 0.0, delay: float = 0.0):
+        self.threshold = threshold
+        self.delay = delay
+
+        self._above_since = None
+        self.armed = False
+
+    @staticmethod
+    def _now() -> float:
+        return time.monotonic()
+
+    @staticmethod
+    def _as_number(signal) -> float | None:
+        # float(True) is 1.0, so a boolean tag works with the default threshold 0
+        try:
+            return float(signal)
+        except (TypeError, ValueError):
+            return None
+
+    def update(self, signal) -> bool:
+        """Feed the current signal value. Returns whether the alarm is armed."""
+        value = self._as_number(signal)
+        if value is None or value <= self.threshold:
+            if self.armed:
+                log.info("Alarm disarmed: enable signal %r", signal)
+            self._above_since = None
+            self.armed = False
+            return False
+
+        now = self._now()
+        if self._above_since is None:
+            self._above_since = now
+
+        armed = now - self._above_since >= self.delay
+        if armed and not self.armed:
+            log.info("Alarm armed: enable signal %r", signal)
+        self.armed = armed
+        return armed
+
+    def remaining(self) -> float:
+        """Seconds left before the gate arms (0 when armed or not counting)."""
+        if self.armed or self._above_since is None:
+            return 0.0
+        return max(0.0, self.delay - (self._now() - self._above_since))

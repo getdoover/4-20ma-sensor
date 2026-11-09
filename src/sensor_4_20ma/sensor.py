@@ -2,6 +2,10 @@ import asyncio, time, logging
 
 from pydoover.utils import apply_async_kalman_filter
 
+# Below this the loop is broken (or the transmitter has failed): a healthy
+# 4-20 mA loop never drops much under 4 mA. Such readings are discarded.
+MIN_VALID_MA = 3.5
+
 class Sensor420ma:
     def __init__(self, pin_no, plt_iface, calibration, process_variance=0.5, measurement_variance=0.5, filter_enabled=True):
         self.max_values = 10
@@ -73,7 +77,7 @@ class Sensor420ma:
         if reading is None:
             return None
         self.raw_value = reading
-        if reading < 3.5:
+        if reading < MIN_VALID_MA:
             print("reading is less than 3.5, skipping...")
             self.reading_count += 1
             return None
